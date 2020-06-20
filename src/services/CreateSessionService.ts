@@ -4,6 +4,7 @@ import { sign } from 'jsonwebtoken';
 import authConfig from '../config/auth';
 
 import User from '../models/User';
+import AppError from '../errors/AppError';
 
 interface RequestDTO {
   email: string;
@@ -23,10 +24,14 @@ class CreateSessionService {
       where: { email },
     });
 
+    if (!user) {
+      throw new AppError('Incorrect E-mail/Password combination.', 401);
+    }
+
     const isValidPassword = await compare(password, user.password);
 
-    if (!user || !isValidPassword) {
-      throw new Error('Incorrect E-mail/Password combination.');
+    if (!isValidPassword) {
+      throw new AppError('Incorrect E-mail/Password combination.', 401);
     }
 
     const { secret, expiresIn } = authConfig.jwt;
